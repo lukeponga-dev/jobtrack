@@ -51,8 +51,12 @@ export default function Home() {
            setAuthError(true);
         }
       } catch (error) {
-        console.error("Firebase auth error:", error);
-        setAuthError(true);
+        console.error("Firebase error:", error);
+        if ((error as any).code === 'auth/operation-not-allowed') {
+           setAuthError(true);
+        } else {
+           // Handle other potential errors
+        }
       } finally {
         setLoading(false);
       }
@@ -64,7 +68,7 @@ export default function Home() {
     const jobsCollectionRef = collection(db, `users/${userId}/jobApplications`);
     const jobsSnapshot = await getDocs(jobsCollectionRef);
     if (jobsSnapshot.empty) {
- console.log('Seeding initial job applications...');
+      console.log('Seeding initial job applications...');
       const initialJobs: Omit<JobApplication, 'id'>[] = [
         { dateApplied: new Date('2025-08-11'), jobTitle: 'Gardens Team Member', company: 'Mitre 10 MEGA Ruakura', jobLink: 'https://www.seek.co.nz/Mitre-10-jobs/in-Ruakura-Waikato', proofOrNotes: 'N/A', status: 'Applied' },
         { dateApplied: new Date('2025-08-11'), jobTitle: 'part-time supermarket assistant', company: 'foodstuff', jobLink: 'https://foodstuffsni.careercentre.net.nz/Job', proofOrNotes: 'N/A', status: 'Applied' },
@@ -79,33 +83,16 @@ export default function Home() {
         }
       }
     }
-
-    const volunteerCollectionRef = collection(db, `users/${userId}/volunteerRoles`);
-    const volunteerSnapshot = await getDocs(volunteerCollectionRef);
-    if (volunteerSnapshot.empty) {
-        console.log('Seeding initial volunteer roles...');
-        const initialVolunteers: Omit<VolunteerRole, 'id'>[] = [
-            { dateApplied: new Date('2025-07-20'), volunteerRole: 'Tree Planting Event', organization: 'Local Council', contactLink: 'https://www.hamilton.govt.nz', notes: 'Checked website', status: 'Applied' },
-            { dateApplied: new Date('2025-07-25'), volunteerRole: 'Community Garden Assistant', organization: 'Urban Harvest Trust', contactLink: '', notes: 'Spoke to Sarah at the market', status: 'Contacted' },
-        ];
-        for (const volunteer of initialVolunteers) {
-            try {
-              await addDoc(volunteerCollectionRef, volunteer);
-            } catch (e) {
-              console.error("Error adding seeded doc: ", e);
-            }
-        }
-    }
   };
-
+  
   useEffect(() => {
     if (!userId) return;
 
     seedData(userId);
 
     setLoading(true);
-    const jobsCollectionRef = collection(db, `users/${userId}/jobApplications`);
-    const unsubscribeJobs = onSnapshot(jobsCollectionRef, (snapshot) => {
+    
+    const jobsUnsubscribe = onSnapshot(collection(db, `users/${userId}/jobApplications`), (snapshot) => {
       const jobsData = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
@@ -121,8 +108,7 @@ export default function Home() {
       setLoading(false);
     });
 
-    const volunteerRolesCollectionRef = collection(db, `users/${userId}/volunteerRoles`);
-    const unsubscribeVolunteers = onSnapshot(volunteerRolesCollectionRef, (snapshot) => {
+    const volunteerRolesUnsubscribe = onSnapshot(collection(db, `users/${userId}/volunteerRoles`), (snapshot) => {
         const volunteerData = snapshot.docs.map(doc => {
             const data = doc.data();
             return {
@@ -137,9 +123,9 @@ export default function Home() {
     });
 
     return () => {
-      unsubscribeJobs();
-      unsubscribeVolunteers();
-    };
+      jobsUnsubscribe();
+      volunteerRolesUnsubscribe();
+    }
   }, [userId]);
 
   const addJob = async (newJob: Omit<JobApplication, 'id'>) => {
@@ -338,5 +324,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
