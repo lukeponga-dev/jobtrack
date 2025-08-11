@@ -46,9 +46,32 @@ export default function Home() {
     };
     init();
   }, []);
+  
+  const seedData = async (userId: string) => {
+    const jobsCollectionRef = collection(db, `users/${userId}/jobApplications`);
+    const snapshot = await getDocs(jobsCollectionRef);
+    if (snapshot.empty) {
+      console.log('Seeding initial job applications...');
+      const initialJobs: Omit<JobApplication, 'id'>[] = [
+        { dateApplied: new Date('2025-10-08'), jobTitle: 'Christmas Casual - Te Awa', company: 'JB HiFi', jobLink: 'https://www.seek.co.nz/job/86361743?tracking=SHR-AND-SharedJob-anz-2', status: 'Applied', nextSteps: '' },
+        { dateApplied: new Date('2025-10-08'), jobTitle: 'Warehouse Storeperson / Delivery Driver Class 1 for Joinery /Cabinet Maker', company: 'Windsor Industries', jobLink: 'https://www.seek.co.nz/job/86303037?tracking=SHR-AND-SharedJob-anz-2', status: 'Applied', nextSteps: '' },
+        { dateApplied: new Date('2025-11-08'), jobTitle: 'part-time supermarket assistant', company: 'foodstuff', jobLink: '', status: 'Applied', nextSteps: '' },
+        { dateApplied: new Date('2025-11-08'), jobTitle: 'Gardens Team Member', company: 'Mitre 10 MEGA Ruakura', jobLink: 'https://mitre10.careercentre.net.nz/job/gardens-team-member-mitre-10-mega-ruakura/mitre-10-mega-ruakura/28628', status: 'Applied', nextSteps: '' },
+      ];
+      for (const job of initialJobs) {
+        try {
+          await addDoc(jobsCollectionRef, job);
+        } catch (e) {
+          console.error("Error adding seeded doc: ", e);
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     if (!userId) return;
+
+    seedData(userId);
 
     setLoading(true);
     const jobsCollectionRef = collection(db, `users/${userId}/jobApplications`);
