@@ -4,7 +4,7 @@
 import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { PlusCircle, X } from "lucide-react";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,12 +16,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { volunteerSchema } from "@/lib/schema";
 import type { VolunteerRole } from "@/lib/types";
 
 interface VolunteerApplicationFormProps {
-  onAddVolunteerRole: (role: Omit<VolunteerRole, 'id'>) => void;
+  onAddVolunteerRole: (role: Omit<VolunteerRole, 'id'> | VolunteerRole) => void;
   initialData?: VolunteerRole | null;
   onCancel?: () => void;
 }
@@ -31,23 +37,30 @@ export default function VolunteerApplicationForm({ onAddVolunteerRole, initialDa
 
   const form = useForm<Omit<VolunteerRole, 'id'>>({
     resolver: zodResolver(volunteerSchema),
-    defaultValues: initialData || {
-      role: "",
-      organisation: "",
-      location: "",
-      link: "",
+    defaultValues: {
+      dateApplied: new Date(),
+      volunteerRole: "",
+      organization: "",
+      contactLink: "",
+      notes: "",
+      status: "Applied",
     },
   });
 
   useEffect(() => {
     if (initialData) {
-      form.reset(initialData);
+      form.reset({
+        ...initialData,
+        dateApplied: new Date(initialData.dateApplied),
+      });
     } else {
       form.reset({
-        role: "",
-        organisation: "",
-        location: "",
-        link: "",
+        dateApplied: new Date(),
+        volunteerRole: "",
+        organization: "",
+        contactLink: "",
+        notes: "",
+        status: "Applied",
       });
     }
   }, [initialData, form]);
@@ -56,81 +69,122 @@ export default function VolunteerApplicationForm({ onAddVolunteerRole, initialDa
     onAddVolunteerRole(values);
     if (!isEditing) {
       form.reset();
+      form.setValue('dateApplied', new Date());
     }
   }
 
   return (
-    <Card className="bg-card text-card-foreground shadow-lg rounded-2xl h-full">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl">{isEditing ? "Edit Volunteer Role" : "Add New Volunteer Role"}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Role</FormLabel>
+    <div className="bg-gray-50 p-6 md:p-8 rounded-2xl mb-8 shadow-inner border border-gray-200">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">{isEditing ? 'Edit Volunteer Role' : 'Add New Volunteer Role'}</h2>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <FormField
+                  control={form.control}
+                  name="dateApplied"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date Applied</FormLabel>
+                      <FormControl>
+                        <Input 
+                            type="date" 
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors"
+                            value={field.value instanceof Date ? format(field.value, 'yyyy-MM-dd') : ''}
+                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="volunteerRole"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Volunteer Role</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Event Staff" {...field} className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+          <FormField
+            control={form.control}
+            name="organization"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Organization</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Local Community Center" {...field} className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="contactLink"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Website/Contact Link</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://..." {...field} className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Contacted Sarah..." {...field} className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                   <FormControl>
-                    <Input placeholder="e.g., Event Volunteer" {...field} className="bg-input" />
+                    <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors">
+                      <SelectValue placeholder="Select a status" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="organisation"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Organisation</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Red Cross" {...field} className="bg-input" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Hamilton, NZ" {...field} className="bg-input" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="link"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Link</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} className="bg-input" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end pt-2 gap-2">
-                {isEditing && (
-                  <Button type="button" variant="ghost" onClick={onCancel}>
-                    <X className="mr-2 h-4 w-4" />
+                  <SelectContent>
+                    <SelectItem value="Applied">Applied</SelectItem>
+                    <SelectItem value="Contacted">Contacted</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <div className="flex gap-4">
+                <Button type="submit" className="flex-1 bg-gradient-to-r from-sky-500 to-emerald-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:from-sky-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-300 transform hover:scale-105 h-auto">
+                    {isEditing ? 'Save Changes' : 'Add Volunteer Role'}
+                </Button>
+               {isEditing && (
+                  <Button type="button" variant="ghost" onClick={onCancel} className="flex-1 bg-gray-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all duration-300 transform hover:scale-105 h-auto">
                     Cancel
                   </Button>
                 )}
-                <Button type="submit">{isEditing ? "Save Changes" : "Add Role"}</Button>
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+        </form>
+      </Form>
+    </div>
   );
 }

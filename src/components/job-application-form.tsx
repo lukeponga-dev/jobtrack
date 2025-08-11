@@ -5,11 +5,9 @@ import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, PlusCircle, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -20,18 +18,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { jobApplicationSchema } from "@/lib/schema";
 import type { JobApplication } from "@/lib/types";
 
@@ -55,12 +47,12 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
       proofOrNotes: "",
     },
   });
-
+  
   useEffect(() => {
     if (initialData) {
       form.reset({
         ...initialData,
-        dateApplied: new Date(initialData.dateApplied) // Ensure date is a Date object
+        dateApplied: new Date(initialData.dateApplied),
       });
     } else {
       form.reset({
@@ -78,68 +70,48 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
     onAddJob(values);
     if (!isEditing) {
       form.reset();
+      form.setValue('dateApplied', new Date());
     }
   }
 
   return (
-    <Card className="bg-card text-card-foreground shadow-lg rounded-2xl h-full">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl">{isEditing ? 'Edit Application' : 'Add New Job Application'}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="bg-gray-50 p-6 md:p-8 rounded-2xl mb-8 shadow-inner border border-gray-200">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800">{isEditing ? 'Edit Job Application' : 'Add New Job Application'}</h2>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-             <FormField
-              control={form.control}
-              name="dateApplied"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date Applied</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="dateApplied"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date Applied</FormLabel>
                       <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal bg-input",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                        <Input 
+                            type="date" 
+                            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors"
+                            value={field.value instanceof Date ? format(field.value, 'yyyy-MM-dd') : ''}
+                            onChange={(e) => field.onChange(new Date(e.target.value))}
+                        />
                       </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="jobTitle"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Job Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Store Assistant" {...field} className="bg-input" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="jobTitle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Job Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Store Assistant" {...field} className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
             <FormField
               control={form.control}
               name="company"
@@ -147,7 +119,7 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
                 <FormItem>
                   <FormLabel>Company</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Foodstuffs" {...field} className="bg-input" />
+                    <Input placeholder="e.g., Foodstuffs" {...field} className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -160,7 +132,7 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
                 <FormItem>
                   <FormLabel>Job Link</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., https://www.seek.co.nz/job/..." {...field} className="bg-input" />
+                    <Input placeholder="e.g., https://www.seek.co.nz/job/..." {...field} className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -173,13 +145,13 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
                 <FormItem>
                   <FormLabel>Proof/Notes</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Picture or notes" {...field} className="bg-input" />
+                    <Input placeholder="e.g., Picture or notes" {...field} className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
+             <FormField
               control={form.control}
               name="status"
               render={({ field }) => (
@@ -187,34 +159,34 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
                   <FormLabel>Status</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-input">
+                      <SelectTrigger className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-colors">
                         <SelectValue placeholder="Select a status" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="Applied">Applied</SelectItem>
-                      <SelectItem value="Interviewing">Interviewing</SelectItem>
+                      <SelectItem value="Phone Screen">Phone Screen</SelectItem>
+                      <SelectItem value="Interview">Interview</SelectItem>
                       <SelectItem value="Offer">Offer</SelectItem>
                       <SelectItem value="Rejected">Rejected</SelectItem>
-                      <SelectItem value="Unknown">Unknown</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="flex justify-end pt-2 gap-2">
+            <div className="flex gap-4">
+                <Button type="submit" className="flex-1 bg-gradient-to-r from-sky-500 to-emerald-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:from-sky-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-300 transform hover:scale-105 h-auto">
+                    {isEditing ? 'Save Changes' : 'Add Job Application'}
+                </Button>
                {isEditing && (
-                  <Button type="button" variant="ghost" onClick={onCancel}>
-                    <X className="mr-2 h-4 w-4" />
+                  <Button type="button" variant="ghost" onClick={onCancel} className="flex-1 bg-gray-400 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300 transition-all duration-300 transform hover:scale-105 h-auto">
                     Cancel
                   </Button>
                 )}
-                <Button type="submit">{isEditing ? 'Save Changes' : 'Add Job'}</Button>
             </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
