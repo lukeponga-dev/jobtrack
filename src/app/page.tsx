@@ -22,14 +22,24 @@ export default function Home() {
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
 
   useEffect(() => {
     const init = async () => {
-      const user = await getCurrentUser();
-      if (user) {
-        setUserId(user.uid);
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setUserId(user.uid);
+        } else {
+          // This case might happen if sign-in is pending or fails silently.
+           setAuthError(true);
+        }
+      } catch (error) {
+        console.error("Firebase auth error:", error);
+        setAuthError(true);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     init();
   }, []);
@@ -37,6 +47,7 @@ export default function Home() {
   useEffect(() => {
     if (!userId) return;
 
+    setLoading(true);
     const jobsCollectionRef = collection(db, `users/${userId}/jobApplications`);
     const unsubscribeJobs = onSnapshot(jobsCollectionRef, (snapshot) => {
       const jobsData = snapshot.docs.map(doc => {
@@ -48,12 +59,18 @@ export default function Home() {
         } as JobApplication;
       });
       setJobs(jobsData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching jobs:", error);
+      setLoading(false);
     });
 
     const volunteerRolesCollectionRef = collection(db, `users/${userId}/volunteerRoles`);
     const unsubscribeVolunteers = onSnapshot(volunteerRolesCollectionRef, (snapshot) => {
       const volunteerData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as VolunteerRole));
       setVolunteerRoles(volunteerData);
+    }, (error) => {
+        console.error("Error fetching volunteer roles:", error);
     });
 
     return () => {
@@ -63,7 +80,10 @@ export default function Home() {
   }, [userId]);
 
   const addJob = async (newJob: Omit<JobApplication, 'id'>) => {
-    if (!userId) return;
+    if (!userId) {
+        toast({ variant: "destructive", title: "Error", description: "You must be signed in to add a job." });
+        return;
+    }
     try {
       const jobsCollectionRef = collection(db, `users/${userId}/jobApplications`);
       await addDoc(jobsCollectionRef, newJob);
@@ -75,7 +95,10 @@ export default function Home() {
   };
 
   const updateJob = async (updatedJob: JobApplication) => {
-    if (!userId) return;
+    if (!userId) {
+        toast({ variant: "destructive", title: "Error", description: "You must be signed in to update a job." });
+        return;
+    }
     try {
       const jobDocRef = doc(db, `users/${userId}/jobApplications`, updatedJob.id);
       // Omit 'id' from the object to be written to Firestore
@@ -89,7 +112,10 @@ export default function Home() {
   };
 
   const addVolunteerRole = async (newRole: Omit<VolunteerRole, 'id'>) => {
-    if (!userId) return;
+    if (!userId) {
+        toast({ variant: "destructive", title: "Error", description: "You must be signed in to add a volunteer role." });
+        return;
+    }
     try {
       const volunteerRolesCollectionRef = collection(db, `users/${userId}/volunteerRoles`);
       await addDoc(volunteerRolesCollectionRef, newRole);
@@ -101,21 +127,28 @@ export default function Home() {
   };
 
   const updateVolunteerRole = async (updatedRole: VolunteerRole) => {
-    if (!userId) return;
+    if (!userId) {
+        toast({ variant: "destructive", title: "Error", description: "You must be signed in to update a volunteer role." });
+        return;
+    }
     try {
       const volunteerDocRef = doc(db, `users/${userId}/volunteerRoles`, updatedRole.id);
       const { id, ...roleData } = updatedRole;
       await updateDoc(volunteerDocRef, roleData);
       setEditingVolunteerRole(null);
       toast({ title: "Volunteer role updated." });
-    } catch (error) {
+    } catch (error)
+{
       console.error("Error updating volunteer role: ", error);
       toast({ variant: "destructive", title: "Error", description: "Could not update volunteer role." });
     }
   };
 
   const deleteVolunteerRole = async (roleId: string) => {
-    if (!userId) return;
+    if (!userId) {
+        toast({ variant: "destructive", title: "Error", description: "You must be signed in to delete a volunteer role." });
+        return;
+    }
     try {
       const volunteerDocRef = doc(db, `users/${userId}/volunteerRoles`, roleId);
       await deleteDoc(volunteerDocRef);
@@ -128,6 +161,16 @@ export default function Home() {
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>
+  }
+
+  if (authError) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen text-center p-4">
+        <h2 className="text-2xl font-bold text-destructive mb-4">Authentication Error</h2>
+        <p className="text-lg text-gray-700 mb-2">Could not sign in to Firebase.</p>
+        <p className="text-gray-600">Please go to the Firebase Console, select your project, and ensure that <span className="font-semibold">Authentication</span> is enabled, with the <span className="font-semibold">"Anonymous"</span> sign-in provider activated.</p>
+      </div>
+    )
   }
 
   return (
