@@ -2,7 +2,9 @@
 "use client";
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { db, getCurrentUser } from '@/lib/firebase';
 import type { JobApplication, VolunteerRole } from '@/lib/types';
 import JobApplicationForm from '@/components/job-application-form';
 import JobApplicationTable from '@/components/job-application-table';
@@ -11,66 +13,122 @@ import CoverLetterRewriter from '@/components/cover-letter-rewriter';
 import { Input } from '@/components/ui/input';
 import VolunteerApplicationForm from '@/components/volunteer-application-form';
 import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-
-const initialJobData: JobApplication[] = [
-    { id: '1', dateApplied: new Date('2025-08-10'), jobTitle: 'Christmas Casual - Te Awa', company: 'JB HiFi', jobLink: 'https://www.seek.co.nz/job/86361743', status: 'Applied', nextSteps: 'Continue search, prepare for possible interview' },
-    { id: '2', dateApplied: new Date('2025-08-10'), jobTitle: 'Warehouse Storeperson / Delivery Driver', company: 'Windsor Industries', jobLink: 'https://www.seek.co.nz/job/86303037', status: 'Applied', nextSteps: 'Await response, check follow-up date' },
-    { id: '3', dateApplied: new Date('2025-08-11'), jobTitle: 'Part-time Supermarket Assistant', company: 'Foodstuff', jobLink: '', status: 'Applied', nextSteps: '' },
-    { id: '4', dateApplied: new Date('2025-08-11'), jobTitle: 'Gardens Team Member', company: 'Mitre 10 MEGA Ruakura', jobLink: 'https://mitre10.careercentre.net.nz/job/gardens-team-member-mitre-10-mega-ruakura/mitre-10-mega-ruakura/28628', status: 'Unknown', nextSteps: '' },
-];
-
-const initialVolunteerData: VolunteerRole[] = [
-    {
-        id: '1',
-        role: 'Digital Translations Support Volunteer – Wix & Canva',
-        organisation: 'Insight Endometriosis',
-        location: 'Home-based (Waikato, NZ)',
-        link: 'https://volunteeringwaikato.org.nz/volunteer/positions/1415/red-cross-shop-volunteer-frankton-village-shop'
-    }
-];
 
 export default function Home() {
-  const [jobs, setJobs] = useState<JobApplication[]>(initialJobData);
-  const [volunteerRoles, setVolunteerRoles] = useState<VolunteerRole[]>(initialVolunteerData);
+  const [jobs, setJobs] = useState<JobApplication[]>([]);
+  const [volunteerRoles, setVolunteerRoles] = useState<VolunteerRole[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingVolunteerRole, setEditingVolunteerRole] = useState<VolunteerRole | null>(null);
   const { toast } = useToast();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const addJob = (newJob: Omit<JobApplication, 'id'>) => {
-    setJobs(prevJobs => [{ ...newJob, id: crypto.randomUUID() }, ...prevJobs]);
-    toast({ title: "Job application added." });
-  };
-  
-  const updateJob = (updatedJob: JobApplication) => {
-    setJobs(prevJobs => prevJobs.map(job => job.id === updatedJob.id ? updatedJob : job));
-  };
-  
-  const addVolunteerRole = (newRole: Omit<VolunteerRole, 'id'>) => {
-    setVolunteerRoles(prevRoles => [{ ...newRole, id: crypto.randomUUID() }, ...prevRoles]);
-    toast({ title: "Volunteer role added." });
+  useEffect(() => {
+    const init = async () => {
+      const user = await getCurrentUser();
+      if (user) {
+        setUserId(user.uid);
+      }
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const jobsCollectionRef = collection(db, `users/${userId}/jobApplications`);
+    const unsubscribeJobs = onSnapshot(jobsCollectionRef, (snapshot) => {
+      const jobsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          dateApplied: (data.dateApplied as Timestamp).toDate(),
+        } as JobApplication;
+      });
+      setJobs(jobsData);
+    });
+
+    const volunteerRolesCollectionRef = collection(db, `users/${userId}/volunteerRoles`);
+    const unsubscribeVolunteers = onSnapshot(volunteerRolesCollectionRef, (snapshot) => {
+      const volunteerData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as VolunteerRole));
+      setVolunteerRoles(volunteerData);
+    });
+
+    return () => {
+      unsubscribeJobs();
+      unsubscribeVolunteers();
+    };
+  }, [userId]);
+
+  const addJob = async (newJob: Omit<JobApplication, 'id'>) => {
+    if (!userId) return;
+    try {
+      const jobsCollectionRef = collection(db, `users/${userId}/jobApplications`);
+      await addDoc(jobsCollectionRef, newJob);
+      toast({ title: "Job application added." });
+    } catch (error) {
+      console.error("Error adding job: ", error);
+      toast({ variant: "destructive", title: "Error", description: "Could not add job application." });
+    }
   };
 
-  const updateVolunteerRole = (updatedRole: VolunteerRole) => {
-    setVolunteerRoles(prevRoles => prevRoles.map(role => role.id === updatedRole.id ? updatedRole : role));
-    setEditingVolunteerRole(null);
-    toast({ title: "Volunteer role updated." });
+  const updateJob = async (updatedJob: JobApplication) => {
+    if (!userId) return;
+    try {
+      const jobDocRef = doc(db, `users/${userId}/jobApplications`, updatedJob.id);
+      // Omit 'id' from the object to be written to Firestore
+      const { id, ...jobData } = updatedJob;
+      await updateDoc(jobDocRef, jobData);
+      toast({ title: "Job application updated." });
+    } catch (error) {
+      console.error("Error updating job: ", error);
+      toast({ variant: "destructive", title: "Error", description: "Could not update job application." });
+    }
   };
 
-  const deleteVolunteerRole = (roleId: string) => {
-    setVolunteerRoles(prevRoles => prevRoles.filter(role => role.id !== roleId));
-    toast({ title: "Volunteer role deleted." });
+  const addVolunteerRole = async (newRole: Omit<VolunteerRole, 'id'>) => {
+    if (!userId) return;
+    try {
+      const volunteerRolesCollectionRef = collection(db, `users/${userId}/volunteerRoles`);
+      await addDoc(volunteerRolesCollectionRef, newRole);
+      toast({ title: "Volunteer role added." });
+    } catch (error) {
+      console.error("Error adding volunteer role: ", error);
+      toast({ variant: "destructive", title: "Error", description: "Could not add volunteer role." });
+    }
   };
+
+  const updateVolunteerRole = async (updatedRole: VolunteerRole) => {
+    if (!userId) return;
+    try {
+      const volunteerDocRef = doc(db, `users/${userId}/volunteerRoles`, updatedRole.id);
+      const { id, ...roleData } = updatedRole;
+      await updateDoc(volunteerDocRef, roleData);
+      setEditingVolunteerRole(null);
+      toast({ title: "Volunteer role updated." });
+    } catch (error) {
+      console.error("Error updating volunteer role: ", error);
+      toast({ variant: "destructive", title: "Error", description: "Could not update volunteer role." });
+    }
+  };
+
+  const deleteVolunteerRole = async (roleId: string) => {
+    if (!userId) return;
+    try {
+      const volunteerDocRef = doc(db, `users/${userId}/volunteerRoles`, roleId);
+      await deleteDoc(volunteerDocRef);
+      toast({ title: "Volunteer role deleted." });
+    } catch (error) {
+      console.error("Error deleting volunteer role: ", error);
+      toast({ variant: "destructive", title: "Error", description: "Could not delete volunteer role." });
+    }
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>
+  }
 
   return (
     <main className="p-4 md:p-8">
