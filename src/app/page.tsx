@@ -10,6 +10,18 @@ import VolunteerCard from '@/components/volunteer-card';
 import CoverLetterRewriter from '@/components/cover-letter-rewriter';
 import { Input } from '@/components/ui/input';
 import VolunteerApplicationForm from '@/components/volunteer-application-form';
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const initialJobData: JobApplication[] = [
     { id: '1', dateApplied: new Date('2025-08-10'), jobTitle: 'Christmas Casual - Te Awa', company: 'JB HiFi', jobLink: 'https://www.seek.co.nz/job/86361743', status: 'Applied', nextSteps: 'Continue search, prepare for possible interview' },
@@ -32,9 +44,12 @@ export default function Home() {
   const [jobs, setJobs] = useState<JobApplication[]>(initialJobData);
   const [volunteerRoles, setVolunteerRoles] = useState<VolunteerRole[]>(initialVolunteerData);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingVolunteerRole, setEditingVolunteerRole] = useState<VolunteerRole | null>(null);
+  const { toast } = useToast();
 
   const addJob = (newJob: Omit<JobApplication, 'id'>) => {
     setJobs(prevJobs => [{ ...newJob, id: crypto.randomUUID() }, ...prevJobs]);
+    toast({ title: "Job application added." });
   };
   
   const updateJob = (updatedJob: JobApplication) => {
@@ -43,8 +58,19 @@ export default function Home() {
   
   const addVolunteerRole = (newRole: Omit<VolunteerRole, 'id'>) => {
     setVolunteerRoles(prevRoles => [{ ...newRole, id: crypto.randomUUID() }, ...prevRoles]);
+    toast({ title: "Volunteer role added." });
   };
 
+  const updateVolunteerRole = (updatedRole: VolunteerRole) => {
+    setVolunteerRoles(prevRoles => prevRoles.map(role => role.id === updatedRole.id ? updatedRole : role));
+    setEditingVolunteerRole(null);
+    toast({ title: "Volunteer role updated." });
+  };
+
+  const deleteVolunteerRole = (roleId: string) => {
+    setVolunteerRoles(prevRoles => prevRoles.filter(role => role.id !== roleId));
+    toast({ title: "Volunteer role deleted." });
+  };
 
   return (
     <main className="p-4 md:p-8">
@@ -56,8 +82,17 @@ export default function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-1 space-y-8">
-            <JobApplicationForm onAddJob={addJob} />
-            <VolunteerApplicationForm onAddVolunteerRole={addVolunteerRole} />
+            {editingVolunteerRole ? (
+                <VolunteerApplicationForm
+                  onAddVolunteerRole={(values) => updateVolunteerRole({ ...values, id: editingVolunteerRole.id })}
+                  initialData={editingVolunteerRole}
+                  onCancel={() => setEditingVolunteerRole(null)}
+                />
+              ) : (
+                <JobApplicationForm onAddJob={addJob} />
+            )}
+            
+            {!editingVolunteerRole && <VolunteerApplicationForm onAddVolunteerRole={addVolunteerRole} />}
           </div>
           <div className="lg:col-span-2">
             <CoverLetterRewriter />
@@ -81,7 +116,12 @@ export default function Home() {
             <h2 className="text-3xl font-bold text-gray-800 mb-4 font-headline">Volunteering</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {volunteerRoles.map(role => (
-                    <VolunteerCard key={role.id} volunteerData={role} />
+                    <VolunteerCard
+                      key={role.id}
+                      volunteerData={role}
+                      onEdit={() => setEditingVolunteerRole(role)}
+                      onDelete={() => deleteVolunteerRole(role.id)}
+                    />
                 ))}
             </div>
         </div>
