@@ -13,11 +13,14 @@ import CoverLetterRewriter from '@/components/cover-letter-rewriter';
 import { Input } from '@/components/ui/input';
 import VolunteerApplicationForm from '@/components/volunteer-application-form';
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { PlusCircle } from 'lucide-react';
 
 export default function Home() {
   const [jobs, setJobs] = useState<JobApplication[]>([]);
   const [volunteerRoles, setVolunteerRoles] = useState<VolunteerRole[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingJob, setEditingJob] = useState<JobApplication | null>(null);
   const [editingVolunteerRole, setEditingVolunteerRole] = useState<VolunteerRole | null>(null);
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
@@ -101,13 +104,28 @@ export default function Home() {
     }
     try {
       const jobDocRef = doc(db, `users/${userId}/jobApplications`, updatedJob.id);
-      // Omit 'id' from the object to be written to Firestore
       const { id, ...jobData } = updatedJob;
       await updateDoc(jobDocRef, jobData);
+      setEditingJob(null);
       toast({ title: "Job application updated." });
     } catch (error) {
       console.error("Error updating job: ", error);
       toast({ variant: "destructive", title: "Error", description: "Could not update job application." });
+    }
+  };
+
+  const deleteJob = async (jobId: string) => {
+    if (!userId) {
+      toast({ variant: "destructive", title: "Error", description: "You must be signed in to delete a job." });
+      return;
+    }
+    try {
+      const jobDocRef = doc(db, `users/${userId}/jobApplications`, jobId);
+      await deleteDoc(jobDocRef);
+      toast({ title: "Job application deleted." });
+    } catch (error) {
+      console.error("Error deleting job: ", error);
+      toast({ variant: "destructive", title: "Error", description: "Could not delete job application." });
     }
   };
 
@@ -173,6 +191,25 @@ export default function Home() {
     )
   }
 
+  const handleEditJob = (job: JobApplication) => {
+    setEditingJob(job);
+    setEditingVolunteerRole(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleEditVolunteer = (role: VolunteerRole) => {
+    setEditingVolunteerRole(role);
+    setEditingJob(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEditing = () => {
+    setEditingJob(null);
+    setEditingVolunteerRole(null);
+  }
+
+  const isEditing = !!editingJob || !!editingVolunteerRole;
+
   return (
     <main className="p-4 md:p-8">
       <div className="container mx-auto">
@@ -183,17 +220,24 @@ export default function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-1 space-y-8">
-            {editingVolunteerRole ? (
-                <VolunteerApplicationForm
-                  onAddVolunteerRole={(values) => updateVolunteerRole({ ...values, id: editingVolunteerRole.id })}
-                  initialData={editingVolunteerRole}
-                  onCancel={() => setEditingVolunteerRole(null)}
-                />
-              ) : (
+            {editingJob ? (
+              <JobApplicationForm
+                onAddJob={(values) => updateJob({ ...values, id: editingJob.id })}
+                initialData={editingJob}
+                onCancel={cancelEditing}
+              />
+            ) : editingVolunteerRole ? (
+              <VolunteerApplicationForm
+                onAddVolunteerRole={(values) => updateVolunteerRole({ ...values, id: editingVolunteerRole.id })}
+                initialData={editingVolunteerRole}
+                onCancel={cancelEditing}
+              />
+            ) : (
+              <>
                 <JobApplicationForm onAddJob={addJob} />
+                <VolunteerApplicationForm onAddVolunteerRole={addVolunteerRole} />
+              </>
             )}
-            
-            {!editingVolunteerRole && <VolunteerApplicationForm onAddVolunteerRole={addVolunteerRole} />}
           </div>
           <div className="lg:col-span-2">
             <CoverLetterRewriter />
@@ -211,22 +255,32 @@ export default function Home() {
             />
         </div>
         
-        <JobApplicationTable jobs={jobs} searchTerm={searchTerm} onUpdateJob={updateJob} />
+        <JobApplicationTable jobs={jobs} searchTerm={searchTerm} onUpdateJob={updateJob} onEditJob={handleEditJob} onDeleteJob={deleteJob} />
         
         <div className="mt-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-4 font-headline">Volunteering</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {volunteerRoles.map(role => (
-                    <VolunteerCard
-                      key={role.id}
-                      volunteerData={role}
-                      onEdit={() => setEditingVolunteerRole(role)}
-                      onDelete={() => deleteVolunteerRole(role.id)}
-                    />
-                ))}
-            </div>
+            {volunteerRoles.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {volunteerRoles.map(role => (
+                      <VolunteerCard
+                        key={role.id}
+                        volunteerData={role}
+                        onEdit={() => handleEditVolunteer(role)}
+                        onDelete={() => deleteVolunteerRole(role.id)}
+                      />
+                  ))}
+              </div>
+            ) : (
+              <Card className="shadow-lg rounded-2xl border-dashed">
+                <CardContent className="p-6 text-center">
+                  <p className="text-gray-500">No volunteer roles added yet. Add one above!</p>
+                </CardContent>
+              </Card>
+            )}
         </div>
       </div>
     </main>
   );
 }
+
+    

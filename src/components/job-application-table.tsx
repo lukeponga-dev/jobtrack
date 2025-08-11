@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -14,6 +15,8 @@ import {
   Wand2,
   Loader2,
   ListTodo,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +36,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import type { JobApplication } from "@/lib/types";
 import { suggestNextSteps } from "@/ai/flows/next-step-suggestions";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +57,8 @@ interface JobApplicationTableProps {
   jobs: JobApplication[];
   searchTerm: string;
   onUpdateJob: (job: JobApplication) => void;
+  onEditJob: (job: JobApplication) => void;
+  onDeleteJob: (id: string) => void;
 }
 
 const statusIcons: { [key: string]: React.ElementType } = {
@@ -140,7 +156,7 @@ function NextStepsDialog({ job, open, onOpenChange, onUpdateJob }: { job: JobApp
 }
 
 
-export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob }: JobApplicationTableProps) {
+export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob, onEditJob, onDeleteJob }: JobApplicationTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("dateApplied");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [selectedJob, setSelectedJob] = React.useState<JobApplication | null>(null);
@@ -205,14 +221,14 @@ export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob }: J
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-gray-50">
+              <TableHeader className="bg-gray-50/50">
                 <TableRow>
                   <SortableHeader columnKey="dateApplied">Date Applied</SortableHeader>
                   <SortableHeader columnKey="jobTitle">Job Title</SortableHeader>
                   <SortableHeader columnKey="company">Company</SortableHeader>
                   <SortableHeader columnKey="status">Status</SortableHeader>
                   <TableHead>Next Steps</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -233,7 +249,7 @@ export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob }: J
                           </Badge>
                         </TableCell>
                         <TableCell className="max-w-xs whitespace-pre-wrap">{job.nextSteps || "N/A"}</TableCell>
-                        <TableCell className="space-x-2 whitespace-nowrap">
+                        <TableCell className="text-right space-x-2 whitespace-nowrap">
                            <Button variant="outline" size="sm" onClick={() => { setSelectedJob(job); setIsDialogOpen(true); }}>
                              <Wand2 className="mr-2 h-4 w-4" />
                              Suggest
@@ -246,6 +262,28 @@ export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob }: J
                               </a>
                             </Button>
                           )}
+                           <Button variant="outline" size="sm" onClick={() => onEditJob(job)}>
+                              <Edit className="mr-2 h-4 w-4" /> Edit
+                           </Button>
+                           <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete this job application.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => onDeleteJob(job.id)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                         </TableCell>
                       </TableRow>
                     );
@@ -266,3 +304,5 @@ export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob }: J
     </>
   );
 }
+
+    

@@ -1,9 +1,11 @@
+
 "use client";
 
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, PlusCircle } from "lucide-react";
+import { Calendar as CalendarIcon, PlusCircle, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,10 +36,14 @@ import { jobApplicationSchema } from "@/lib/schema";
 import type { JobApplication } from "@/lib/types";
 
 interface JobApplicationFormProps {
-  onAddJob: (job: Omit<JobApplication, 'id'>) => void;
+  onAddJob: (job: Omit<JobApplication, 'id'> | JobApplication) => void;
+  initialData?: JobApplication | null;
+  onCancel?: () => void;
 }
 
-export default function JobApplicationForm({ onAddJob }: JobApplicationFormProps) {
+export default function JobApplicationForm({ onAddJob, initialData, onCancel }: JobApplicationFormProps) {
+  const isEditing = !!initialData;
+
   const form = useForm<Omit<JobApplication, 'id'>>({
     resolver: zodResolver(jobApplicationSchema),
     defaultValues: {
@@ -50,9 +56,29 @@ export default function JobApplicationForm({ onAddJob }: JobApplicationFormProps
     },
   });
 
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        ...initialData,
+        dateApplied: new Date(initialData.dateApplied) // Ensure date is a Date object
+      });
+    } else {
+      form.reset({
+        dateApplied: new Date(),
+        jobTitle: "",
+        company: "",
+        jobLink: "",
+        status: "Applied",
+        nextSteps: "",
+      });
+    }
+  }, [initialData, form]);
+
   function onSubmit(values: Omit<JobApplication, 'id'>) {
     onAddJob(values);
-    form.reset();
+    if (!isEditing) {
+      form.reset();
+    }
   }
 
   return (
@@ -60,9 +86,9 @@ export default function JobApplicationForm({ onAddJob }: JobApplicationFormProps
       <CardHeader>
         <div className="flex items-center gap-2">
             <PlusCircle className="h-6 w-6 text-primary" />
-            <CardTitle className="font-headline">Add New Application</CardTitle>
+            <CardTitle className="font-headline">{isEditing ? 'Edit Application' : 'Add New Application'}</CardTitle>
         </div>
-        <CardDescription>Enter the details of a new job you've applied for.</CardDescription>
+        <CardDescription>{isEditing ? "Update the details of this job application." : "Enter the details of a new job you've applied for."}</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -137,7 +163,7 @@ export default function JobApplicationForm({ onAddJob }: JobApplicationFormProps
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="bg-white">
                         <SelectValue placeholder="Select a status" />
@@ -181,8 +207,14 @@ export default function JobApplicationForm({ onAddJob }: JobApplicationFormProps
                 </FormItem>
               )}
             />
-            <div className="flex justify-end pt-2">
-                <Button type="submit">Add Job</Button>
+            <div className="flex justify-end pt-2 gap-2">
+               {isEditing && (
+                  <Button type="button" variant="ghost" onClick={onCancel}>
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                  </Button>
+                )}
+                <Button type="submit">{isEditing ? 'Save Changes' : 'Add Job'}</Button>
             </div>
           </form>
         </Form>
@@ -190,3 +222,5 @@ export default function JobApplicationForm({ onAddJob }: JobApplicationFormProps
     </Card>
   );
 }
+
+    
