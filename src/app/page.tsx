@@ -64,12 +64,12 @@ export default function Home() {
     const jobsCollectionRef = collection(db, `users/${userId}/jobApplications`);
     const jobsSnapshot = await getDocs(jobsCollectionRef);
     if (jobsSnapshot.empty) {
-      console.log('Seeding initial job applications...');
+ console.log('Seeding initial job applications...');
       const initialJobs: Omit<JobApplication, 'id'>[] = [
-        { dateApplied: new Date('2025-08-10'), jobTitle: 'Christmas Casual - Te Awa', company: 'JB HiFi', jobLink: 'https://www.seek.co.nz/job/86361743?tracking=SHR-AND-SharedJob-anz-2', proofOrNotes: 'Picture', status: 'Applied' },
-        { dateApplied: new Date('2025-08-10'), jobTitle: 'Warehouse Storeperson / Delivery Driver Class 1 for Joinery /Cabinet Maker', company: 'Windsor Industries', jobLink: 'https://www.seek.co.nz/job/86303037?tracking=SHR-AND-SharedJob-anz-2', proofOrNotes: 'Picture', status: 'Applied' },
-        { dateApplied: new Date('2025-08-11'), jobTitle: 'part-time supermarket assistant', company: 'foodstuff', jobLink: '', proofOrNotes: '', status: 'Applied' },
-        { dateApplied: new Date('2025-08-11'), jobTitle: 'Gardens Team Member', company: 'Mitre 10 MEGA Ruakura', jobLink: 'https://mitre10.careercentre.net.nz/job/gardens-team-member-mitre-10-mega-ruakura/mitre-10-mega-ruakura/28628', proofOrNotes: '', status: 'Applied' },
+        { dateApplied: new Date('2025-08-11'), jobTitle: 'Gardens Team Member', company: 'Mitre 10 MEGA Ruakura', jobLink: 'https://www.seek.co.nz/Mitre-10-jobs/in-Ruakura-Waikato', proofOrNotes: 'N/A', status: 'Applied' },
+        { dateApplied: new Date('2025-08-11'), jobTitle: 'part-time supermarket assistant', company: 'foodstuff', jobLink: 'https://foodstuffsni.careercentre.net.nz/Job', proofOrNotes: 'N/A', status: 'Applied' },
+        { dateApplied: new Date('2025-08-10'), jobTitle: 'Warehouse Storeperson / Delivery Driver Class 1 for Joinery /Cabinet Maker', company: 'Windsor Industries', jobLink: 'https://www.seek.co.nz/driver-class-1-jobs/in-Hamilton-Waikato', proofOrNotes: 'Picture', status: 'Applied' },
+        { dateApplied: new Date('2025-08-10'), jobTitle: 'Christmas Casual - Te Awa', company: 'JB HiFi', jobLink: 'https://www.jbhifi.co.nz/pages/jobs', proofOrNotes: 'Picture', status: 'Applied' },
       ];
       for (const job of initialJobs) {
         try {
@@ -337,3 +337,5 @@ export default function Home() {
     </main>
   );
 }
+
+    
