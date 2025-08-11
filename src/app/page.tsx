@@ -1,13 +1,15 @@
+
 "use client";
 
 import * as React from 'react';
 import { useState } from 'react';
-import type { JobApplication, VolunteerData } from '@/lib/types';
+import type { JobApplication, VolunteerRole } from '@/lib/types';
 import JobApplicationForm from '@/components/job-application-form';
 import JobApplicationTable from '@/components/job-application-table';
 import VolunteerCard from '@/components/volunteer-card';
 import CoverLetterRewriter from '@/components/cover-letter-rewriter';
 import { Input } from '@/components/ui/input';
+import VolunteerApplicationForm from '@/components/volunteer-application-form';
 
 const initialJobData: JobApplication[] = [
     { id: '1', dateApplied: new Date('2025-08-10'), jobTitle: 'Christmas Casual - Te Awa', company: 'JB HiFi', jobLink: 'https://www.seek.co.nz/job/86361743', status: 'Applied', nextSteps: 'Continue search, prepare for possible interview' },
@@ -16,15 +18,19 @@ const initialJobData: JobApplication[] = [
     { id: '4', dateApplied: new Date('2025-08-11'), jobTitle: 'Gardens Team Member', company: 'Mitre 10 MEGA Ruakura', jobLink: 'https://mitre10.careercentre.net.nz/job/gardens-team-member-mitre-10-mega-ruakura/mitre-10-mega-ruakura/28628', status: 'Unknown', nextSteps: '' },
 ];
 
-const volunteerData: VolunteerData = {
-    role: 'Digital Translations Support Volunteer – Wix & Canva',
-    organisation: 'Insight Endometriosis',
-    location: 'Home-based (Waikato, NZ)',
-    link: 'https://volunteeringwaikato.org.nz/volunteer/positions/1415/red-cross-shop-volunteer-frankton-village-shop'
-};
+const initialVolunteerData: VolunteerRole[] = [
+    {
+        id: '1',
+        role: 'Digital Translations Support Volunteer – Wix & Canva',
+        organisation: 'Insight Endometriosis',
+        location: 'Home-based (Waikato, NZ)',
+        link: 'https://volunteeringwaikato.org.nz/volunteer/positions/1415/red-cross-shop-volunteer-frankton-village-shop'
+    }
+];
 
 export default function Home() {
   const [jobs, setJobs] = useState<JobApplication[]>(initialJobData);
+  const [volunteerRoles, setVolunteerRoles] = useState<VolunteerRole[]>(initialVolunteerData);
   const [searchTerm, setSearchTerm] = useState('');
 
   const addJob = (newJob: Omit<JobApplication, 'id'>) => {
@@ -33,6 +39,10 @@ export default function Home() {
   
   const updateJob = (updatedJob: JobApplication) => {
     setJobs(prevJobs => prevJobs.map(job => job.id === updatedJob.id ? updatedJob : job));
+  };
+  
+  const addVolunteerRole = (newRole: Omit<VolunteerRole, 'id'>) => {
+    setVolunteerRoles(prevRoles => [{ ...newRole, id: crypto.randomUUID() }, ...prevRoles]);
   };
 
 
@@ -45,8 +55,9 @@ export default function Home() {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-8">
             <JobApplicationForm onAddJob={addJob} />
+            <VolunteerApplicationForm onAddVolunteerRole={addVolunteerRole} />
           </div>
           <div className="lg:col-span-2">
             <CoverLetterRewriter />
@@ -67,7 +78,12 @@ export default function Home() {
         <JobApplicationTable jobs={jobs} searchTerm={searchTerm} onUpdateJob={updateJob} />
         
         <div className="mt-8">
-          <VolunteerCard volunteerData={volunteerData} />
+            <h2 className="text-3xl font-bold text-gray-800 mb-4 font-headline">Volunteering</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {volunteerRoles.map(role => (
+                    <VolunteerCard key={role.id} volunteerData={role} />
+                ))}
+            </div>
         </div>
       </div>
     </main>
