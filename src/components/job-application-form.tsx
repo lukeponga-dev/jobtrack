@@ -52,7 +52,7 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
       company: "",
       jobLink: "",
       status: "Applied",
-      nextSteps: "",
+      proofOrNotes: "",
     },
   });
 
@@ -69,7 +69,7 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
         company: "",
         jobLink: "",
         status: "Applied",
-        nextSteps: "",
+        proofOrNotes: "",
       });
     }
   }, [initialData, form]);
@@ -82,44 +82,14 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
   }
 
   return (
-    <Card className="shadow-xl rounded-2xl h-full">
+    <Card className="bg-card text-card-foreground shadow-lg rounded-2xl h-full">
       <CardHeader>
-        <div className="flex items-center gap-2">
-            <PlusCircle className="h-6 w-6 text-primary" />
-            <CardTitle className="font-headline">{isEditing ? 'Edit Application' : 'Add New Application'}</CardTitle>
-        </div>
-        <CardDescription>{isEditing ? "Update the details of this job application." : "Enter the details of a new job you've applied for."}</CardDescription>
+        <CardTitle className="font-headline text-2xl">{isEditing ? 'Edit Application' : 'Add New Job Application'}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="jobTitle"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Job Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Software Engineer" {...field} className="bg-white" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Google" {...field} className="bg-white" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
+             <FormField
               control={form.control}
               name="dateApplied"
               render={({ field }) => (
@@ -131,7 +101,7 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full pl-3 text-left font-normal bg-white",
+                            "w-full pl-3 text-left font-normal bg-input",
                             !field.value && "text-muted-foreground"
                           )}
                         >
@@ -159,13 +129,65 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
             />
             <FormField
               control={form.control}
+              name="jobTitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Job Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Store Assistant" {...field} className="bg-input" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="company"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Foodstuffs" {...field} className="bg-input" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="jobLink"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Job Link</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., https://www.seek.co.nz/job/..." {...field} className="bg-input" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="proofOrNotes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Proof/Notes</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Picture or notes" {...field} className="bg-input" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="status"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-white">
+                      <SelectTrigger className="bg-input">
                         <SelectValue placeholder="Select a status" />
                       </SelectTrigger>
                     </FormControl>
@@ -177,32 +199,6 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
                       <SelectItem value="Unknown">Unknown</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="jobLink"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Job Link</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} className="bg-white" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="nextSteps"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Next Steps</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Follow up next week" {...field} className="bg-white" />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -222,5 +218,3 @@ export default function JobApplicationForm({ onAddJob, initialData, onCancel }: 
     </Card>
   );
 }
-
-    

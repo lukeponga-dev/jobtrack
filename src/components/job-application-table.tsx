@@ -92,7 +92,7 @@ function NextStepsDialog({ job, open, onOpenChange, onUpdateJob }: { job: JobApp
             jobTitle: job.jobTitle,
             company: job.company,
             status: job.status,
-            nextSteps: job.nextSteps || "",
+            nextSteps: job.proofOrNotes || "",
           });
           setSuggestions(result.suggestions);
         } catch (error) {
@@ -112,12 +112,12 @@ function NextStepsDialog({ job, open, onOpenChange, onUpdateJob }: { job: JobApp
   
   const handleAddNextStep = (suggestion: string) => {
     if (!job) return;
-    const updatedNextSteps = job.nextSteps ? `${job.nextSteps}\n- ${suggestion}` : `- ${suggestion}`;
-    onUpdateJob({ ...job, nextSteps: updatedNextSteps });
+    const updatedNextSteps = job.proofOrNotes ? `${job.proofOrNotes}\n- ${suggestion}` : `- ${suggestion}`;
+    onUpdateJob({ ...job, proofOrNotes: updatedNextSteps });
     onOpenChange(false);
     toast({
         title: "Next Step Added",
-        description: "The suggestion has been added to your next steps.",
+        description: "The suggestion has been added to your notes.",
     });
   };
 
@@ -217,17 +217,17 @@ export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob, onE
 
   return (
     <>
-      <Card className="shadow-xl rounded-2xl overflow-hidden">
+      <Card className="shadow-xl rounded-2xl overflow-hidden bg-card">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-gray-50/50">
+              <TableHeader className="bg-muted/50">
                 <TableRow>
                   <SortableHeader columnKey="dateApplied">Date Applied</SortableHeader>
                   <SortableHeader columnKey="jobTitle">Job Title</SortableHeader>
                   <SortableHeader columnKey="company">Company</SortableHeader>
                   <SortableHeader columnKey="status">Status</SortableHeader>
-                  <TableHead>Next Steps</TableHead>
+                  <TableHead>Proof/Notes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -236,7 +236,7 @@ export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob, onE
                   filteredAndSortedJobs.map((job) => {
                     const StatusIcon = statusIcons[job.status] || HelpCircle;
                     return (
-                      <TableRow key={job.id} className="hover:bg-gray-50/50">
+                      <TableRow key={job.id} className="hover:bg-muted/50">
                         <TableCell className="font-medium whitespace-nowrap">
                           {format(job.dateApplied, "dd MMM yyyy")}
                         </TableCell>
@@ -248,7 +248,7 @@ export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob, onE
                             {job.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-xs whitespace-pre-wrap">{job.nextSteps || "N/A"}</TableCell>
+                        <TableCell className="max-w-xs whitespace-pre-wrap">{job.proofOrNotes || "N/A"}</TableCell>
                         <TableCell className="text-right space-x-2 whitespace-nowrap">
                            <Button variant="outline" size="sm" onClick={() => { setSelectedJob(job); setIsDialogOpen(true); }}>
                              <Wand2 className="mr-2 h-4 w-4" />
@@ -304,5 +304,3 @@ export default function JobApplicationTable({ jobs, searchTerm, onUpdateJob, onE
     </>
   );
 }
-
-    

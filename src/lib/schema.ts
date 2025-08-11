@@ -6,7 +6,7 @@ export const jobApplicationSchema = z.object({
   company: z.string().min(1, 'Company is required.'),
   jobLink: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
   status: z.enum(['Applied', 'Interviewing', 'Offer', 'Rejected', 'Unknown']),
-  nextSteps: z.string().optional(),
+  proofOrNotes: z.string().optional(),
 });
 
 export const volunteerSchema = z.object({

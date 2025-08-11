@@ -15,6 +15,8 @@ import VolunteerApplicationForm from '@/components/volunteer-application-form';
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { PlusCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs-new"
+
 
 export default function Home() {
   const [jobs, setJobs] = useState<JobApplication[]>([]);
@@ -26,6 +28,8 @@ export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(false);
+  const [activeTab, setActiveTab] = useState('jobs');
+
 
   useEffect(() => {
     const init = async () => {
@@ -53,10 +57,10 @@ export default function Home() {
     if (snapshot.empty) {
       console.log('Seeding initial job applications...');
       const initialJobs: Omit<JobApplication, 'id'>[] = [
-        { dateApplied: new Date('2025-10-08'), jobTitle: 'Christmas Casual - Te Awa', company: 'JB HiFi', jobLink: 'https://www.seek.co.nz/job/86361743?tracking=SHR-AND-SharedJob-anz-2', status: 'Applied', nextSteps: '' },
-        { dateApplied: new Date('2025-10-08'), jobTitle: 'Warehouse Storeperson / Delivery Driver Class 1 for Joinery /Cabinet Maker', company: 'Windsor Industries', jobLink: 'https://www.seek.co.nz/job/86303037?tracking=SHR-AND-SharedJob-anz-2', status: 'Applied', nextSteps: '' },
-        { dateApplied: new Date('2025-11-08'), jobTitle: 'part-time supermarket assistant', company: 'foodstuff', jobLink: '', status: 'Applied', nextSteps: '' },
-        { dateApplied: new Date('2025-11-08'), jobTitle: 'Gardens Team Member', company: 'Mitre 10 MEGA Ruakura', jobLink: 'https://mitre10.careercentre.net.nz/job/gardens-team-member-mitre-10-mega-ruakura/mitre-10-mega-ruakura/28628', status: 'Applied', nextSteps: '' },
+        { dateApplied: new Date('2025-10-08'), jobTitle: 'Christmas Casual - Te Awa', company: 'JB HiFi', jobLink: 'https://www.seek.co.nz/job/86361743?tracking=SHR-AND-SharedJob-anz-2', status: 'Applied', proofOrNotes: '' },
+        { dateApplied: new Date('2025-10-08'), jobTitle: 'Warehouse Storeperson / Delivery Driver Class 1 for Joinery /Cabinet Maker', company: 'Windsor Industries', jobLink: 'https://www.seek.co.nz/job/86303037?tracking=SHR-AND-SharedJob-anz-2', status: 'Applied', proofOrNotes: '' },
+        { dateApplied: new Date('2025-11-08'), jobTitle: 'part-time supermarket assistant', company: 'foodstuff', jobLink: '', status: 'Applied', proofOrNotes: '' },
+        { dateApplied: new Date('2025-11-08'), jobTitle: 'Gardens Team Member', company: 'Mitre 10 MEGA Ruakura', jobLink: 'https://mitre10.careercentre.net.nz/job/gardens-team-member-mitre-10-mega-ruakura/mitre-10-mega-ruakura/28628', status: 'Applied', proofOrNotes: '' },
       ];
       for (const job of initialJobs) {
         try {
@@ -208,8 +212,8 @@ export default function Home() {
     return (
       <div className="flex flex-col justify-center items-center h-screen text-center p-4">
         <h2 className="text-2xl font-bold text-destructive mb-4">Authentication Error</h2>
-        <p className="text-lg text-gray-700 mb-2">Could not sign in to Firebase.</p>
-        <p className="text-gray-600">Please go to the Firebase Console, select your project, and ensure that <span className="font-semibold">Authentication</span> is enabled, with the <span className="font-semibold">"Anonymous"</span> sign-in provider activated.</p>
+        <p className="text-lg mb-2">Could not sign in to Firebase.</p>
+        <p className="text-muted-foreground">Please go to the Firebase Console, select your project, and ensure that <span className="font-semibold text-foreground">Authentication</span> is enabled, with the <span className="font-semibold text-foreground">"Anonymous"</span> sign-in provider activated.</p>
       </div>
     )
   }
@@ -217,12 +221,14 @@ export default function Home() {
   const handleEditJob = (job: JobApplication) => {
     setEditingJob(job);
     setEditingVolunteerRole(null);
+    setActiveTab('jobs');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEditVolunteer = (role: VolunteerRole) => {
     setEditingVolunteerRole(role);
     setEditingJob(null);
+    setActiveTab('volunteer');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -234,76 +240,82 @@ export default function Home() {
   const isEditing = !!editingJob || !!editingVolunteerRole;
 
   return (
-    <main className="p-4 md:p-8">
-      <div className="container mx-auto">
-        <header className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2 font-headline">CareerCompass</h1>
-            <p className="text-lg text-gray-600">All your job applications in one place.</p>
+    <main className="p-4 md:p-8 bg-background text-foreground">
+      <div className="container mx-auto max-w-4xl">
+        <header className="text-left mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold text-accent mb-2 font-headline">Your Application Hub</h1>
+            <p className="text-lg text-muted-foreground">Track your job and volunteer applications with ease.</p>
+            {userId && (
+              <div className="mt-4">
+                <p className="text-sm text-muted-foreground">Your User ID:</p>
+                <p className="text-sm font-mono p-2 bg-muted rounded-md inline-block">{userId}</p>
+              </div>
+            )}
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          <div className="lg:col-span-1 space-y-8">
-            {editingJob ? (
-              <JobApplicationForm
-                onAddJob={(values) => updateJob({ ...values, id: editingJob.id })}
-                initialData={editingJob}
-                onCancel={cancelEditing}
-              />
-            ) : editingVolunteerRole ? (
-              <VolunteerApplicationForm
-                onAddVolunteerRole={(values) => updateVolunteerRole({ ...values, id: editingVolunteerRole.id })}
-                initialData={editingVolunteerRole}
-                onCancel={cancelEditing}
-              />
-            ) : (
-              <>
-                <JobApplicationForm onAddJob={addJob} />
-                <VolunteerApplicationForm onAddVolunteerRole={addVolunteerRole} />
-              </>
-            )}
-          </div>
-          <div className="lg:col-span-2">
-            <CoverLetterRewriter />
-          </div>
-        </div>
-
-        <div className="mb-6">
-            <Input 
-              type="text" 
-              id="searchInput" 
-              placeholder="Search by Job Title, Company, or Status..." 
-              className="w-full p-3 rounded-xl border-2 focus:border-primary transition-colors bg-white shadow-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-        </div>
-        
-        <JobApplicationTable jobs={jobs} searchTerm={searchTerm} onUpdateJob={updateJob} onEditJob={handleEditJob} onDeleteJob={deleteJob} />
-        
-        <div className="mt-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4 font-headline">Volunteering</h2>
-            {volunteerRoles.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {volunteerRoles.map(role => (
-                      <VolunteerCard
-                        key={role.id}
-                        volunteerData={role}
-                        onEdit={() => handleEditVolunteer(role)}
-                        onDelete={() => deleteVolunteerRole(role.id)}
-                      />
-                  ))}
-              </div>
-            ) : (
-              <Card className="shadow-lg rounded-2xl border-dashed">
-                <CardContent className="p-6 text-center">
-                  <p className="text-gray-500">No volunteer roles added yet. Add one above!</p>
-                </CardContent>
-              </Card>
-            )}
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="jobs">Job Applications</TabsTrigger>
+                <TabsTrigger value="volunteer">Volunteer Roles</TabsTrigger>
+            </TabsList>
+            <TabsContent value="jobs">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+                    <div className="lg:col-span-1 space-y-8">
+                        <JobApplicationForm
+                            onAddJob={editingJob ? (values) => updateJob({ ...values, id: editingJob.id }) : addJob}
+                            initialData={editingJob}
+                            onCancel={isEditing ? cancelEditing : undefined}
+                            />
+                    </div>
+                     <div className="lg:col-span-2">
+                        <div className="mb-6">
+                            <Input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Search by Job Title, Company, or Status..." 
+                            className="w-full p-3 rounded-lg border-2 focus:border-primary transition-colors bg-input shadow-sm"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <JobApplicationTable jobs={jobs} searchTerm={searchTerm} onUpdateJob={updateJob} onEditJob={handleEditJob} onDeleteJob={deleteJob} />
+                    </div>
+                </div>
+            </TabsContent>
+            <TabsContent value="volunteer">
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+                    <div className="lg:col-span-1 space-y-8">
+                         <VolunteerApplicationForm
+                            onAddVolunteerRole={editingVolunteerRole ? (values) => updateVolunteerRole({ ...values, id: editingVolunteerRole.id }) : addVolunteerRole}
+                            initialData={editingVolunteerRole}
+                            onCancel={isEditing ? cancelEditing : undefined}
+                         />
+                    </div>
+                    <div className="lg:col-span-2">
+                         <h2 className="text-3xl font-bold text-gray-800 mb-4 font-headline">Volunteering</h2>
+                            {volunteerRoles.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {volunteerRoles.map(role => (
+                                    <VolunteerCard
+                                        key={role.id}
+                                        volunteerData={role}
+                                        onEdit={() => handleEditVolunteer(role)}
+                                        onDelete={() => deleteVolunteerRole(role.id)}
+                                    />
+                                ))}
+                            </div>
+                            ) : (
+                            <Card className="shadow-lg rounded-2xl border-dashed bg-card">
+                                <CardContent className="p-6 text-center">
+                                <p className="text-muted-foreground">No volunteer roles added yet. Add one using the form!</p>
+                                </CardContent>
+                            </Card>
+                            )}
+                    </div>
+                 </div>
+            </TabsContent>
+        </Tabs>
       </div>
     </main>
   );
 }
-
-    

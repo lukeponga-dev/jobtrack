@@ -15,7 +15,7 @@ const NextStepSuggestionsInputSchema = z.object({
   jobTitle: z.string().describe('The title of the job application.'),
   company: z.string().describe('The company the application was submitted to.'),
   status: z.string().describe('The current status of the job application (e.g., Applied, Interviewing, Offer, Rejected, Unknown).'),
-  nextSteps: z.string().describe('The next steps to take in the job application process.'),
+  nextSteps: z.string().describe('The current notes for the job application.'),
 });
 export type NextStepSuggestionsInput = z.infer<typeof NextStepSuggestionsInputSchema>;
 
@@ -34,12 +34,12 @@ const prompt = ai.definePrompt({
   output: {schema: NextStepSuggestionsOutputSchema},
   prompt: `You are a career advisor providing suggestions for next steps in a job application process.
 
-  Based on the job title, company, current status, and any next steps the user has already identified, provide a list of suggestions for the user with detailed reasoning.
+  Based on the job title, company, current status, and any notes the user has provided, provide a list of suggestions for the user with detailed reasoning.
 
   Job Title: {{{jobTitle}}}
   Company: {{{company}}}
   Status: {{{status}}}
-  Next Steps (User):
+  Notes:
   {{#if nextSteps}}
   {{{nextSteps}}}
   {{else}}

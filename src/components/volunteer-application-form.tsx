@@ -60,13 +60,9 @@ export default function VolunteerApplicationForm({ onAddVolunteerRole, initialDa
   }
 
   return (
-    <Card className="shadow-xl rounded-2xl h-full">
+    <Card className="bg-card text-card-foreground shadow-lg rounded-2xl h-full">
       <CardHeader>
-        <div className="flex items-center gap-2">
-            <PlusCircle className="h-6 w-6 text-primary" />
-            <CardTitle className="font-headline">{isEditing ? "Edit Volunteer Role" : "Add Volunteer Role"}</CardTitle>
-        </div>
-        <CardDescription>{isEditing ? "Update the details of this volunteer role." : "Enter the details of a new volunteer role."}</CardDescription>
+        <CardTitle className="font-headline text-2xl">{isEditing ? "Edit Volunteer Role" : "Add New Volunteer Role"}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -78,7 +74,7 @@ export default function VolunteerApplicationForm({ onAddVolunteerRole, initialDa
                 <FormItem>
                   <FormLabel>Role</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Event Volunteer" {...field} className="bg-white" />
+                    <Input placeholder="e.g., Event Volunteer" {...field} className="bg-input" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -91,7 +87,7 @@ export default function VolunteerApplicationForm({ onAddVolunteerRole, initialDa
                 <FormItem>
                   <FormLabel>Organisation</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Red Cross" {...field} className="bg-white" />
+                    <Input placeholder="e.g., Red Cross" {...field} className="bg-input" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -104,7 +100,7 @@ export default function VolunteerApplicationForm({ onAddVolunteerRole, initialDa
                 <FormItem>
                   <FormLabel>Location</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Hamilton, NZ" {...field} className="bg-white" />
+                    <Input placeholder="e.g., Hamilton, NZ" {...field} className="bg-input" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -117,7 +113,7 @@ export default function VolunteerApplicationForm({ onAddVolunteerRole, initialDa
                 <FormItem>
                   <FormLabel>Link</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://..." {...field} className="bg-white" />
+                    <Input placeholder="https://..." {...field} className="bg-input" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

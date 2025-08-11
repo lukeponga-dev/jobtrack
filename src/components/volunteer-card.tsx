@@ -25,7 +25,7 @@ interface VolunteerCardProps {
 
 export default function VolunteerCard({ volunteerData, onEdit, onDelete }: VolunteerCardProps) {
   return (
-    <Card className="shadow-xl rounded-2xl h-full flex flex-col">
+    <Card className="bg-card text-card-foreground shadow-lg rounded-2xl h-full flex flex-col">
       <CardHeader>
         <div className="flex items-center gap-3">
           <Briefcase className="h-6 w-6 text-primary" />
@@ -36,22 +36,22 @@ export default function VolunteerCard({ volunteerData, onEdit, onDelete }: Volun
           <div className="flex items-start gap-4 text-sm">
               <Building className="h-5 w-5 text-primary mt-0.5 shrink-0" />
               <div>
-                  <h3 className="font-semibold text-gray-700">Organisation</h3>
-                  <p className="text-gray-900">{volunteerData.organisation}</p>
+                  <h3 className="font-semibold text-muted-foreground">Organisation</h3>
+                  <p className="text-foreground">{volunteerData.organisation}</p>
               </div>
           </div>
           <div className="flex items-start gap-4 text-sm">
               <MapPin className="h-5 w-5 text-primary mt-0.5 shrink-0" />
               <div>
-                  <h3 className="font-semibold text-gray-700">Location</h3>
-                  <p className="text-gray-900">{volunteerData.location}</p>
+                  <h3 className="font-semibold text-muted-foreground">Location</h3>
+                  <p className="text-foreground">{volunteerData.location}</p>
               </div>
           </div>
           {volunteerData.link && (
             <div className="flex items-start gap-4 text-sm">
                 <LinkIcon className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                 <div>
-                    <h3 className="font-semibold text-gray-700">Link</h3>
+                    <h3 className="font-semibold text-muted-foreground">Link</h3>
                     <a href={volunteerData.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium break-all">
                         View Opportunity
                     </a>
